@@ -1,8 +1,11 @@
 package com.example.Event_booking.controller;
 
+import com.example.Event_booking.Request.SeatRequest;
 import com.example.Event_booking.entity.Seat;
 import com.example.Event_booking.entity.Venue;
+import com.example.Event_booking.response.SeatResponse;
 import com.example.Event_booking.service.SeatService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,12 +21,12 @@ public class SeatController {
     }
 
     @PostMapping
-    public void createSeat(@RequestBody Seat seat){
-        seatService.createSeat(seat);
+    public void createSeat(@Valid @RequestBody SeatRequest seatRequest){
+        seatService.createSeat(seatRequest);
     }
 
     @GetMapping
-    public List<Seat> allSeat(){
+    public List<SeatResponse> allSeat(){
         return seatService.getAllSeat();
     }
 

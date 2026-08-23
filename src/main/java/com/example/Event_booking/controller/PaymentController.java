@@ -3,6 +3,7 @@ package com.example.Event_booking.controller;
 import com.example.Event_booking.entity.Booking;
 import com.example.Event_booking.entity.Payment;
 import com.example.Event_booking.repo.BookingRepository;
+import com.example.Event_booking.response.PaymentResponse;
 import com.example.Event_booking.service.BookingService;
 import com.example.Event_booking.service.PaymentService;
 import org.springframework.web.bind.annotation.*;
@@ -25,18 +26,18 @@ public class PaymentController {
     }
 
     @GetMapping
-    public List<Payment> allPayment(){
+    public List<PaymentResponse> allPayment(){
         return paymentService.allPayment();
     }
 
     @GetMapping("/{id}")
-    public Payment findPayment(@PathVariable Long id){
+    public PaymentResponse findPayment(@PathVariable Long id){
         return paymentService.findPayment(id);
     }
 
     @GetMapping("/booking/{bookingId}")
-    public List<Payment> findBybooking(@PathVariable Long bookingid){
-        Booking booking=bookingService.findBooking(bookingid);
+    public List<Payment> findBybooking(@PathVariable Long bookingId){
+        Booking booking=bookingService.findBooking(bookingId);
         return paymentService.findByBooking(booking);
     }
 

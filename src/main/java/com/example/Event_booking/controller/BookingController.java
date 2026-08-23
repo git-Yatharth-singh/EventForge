@@ -3,6 +3,7 @@ package com.example.Event_booking.controller;
 import com.example.Event_booking.Request.BookingRequest;
 import com.example.Event_booking.entity.Booking;
 import com.example.Event_booking.service.BookingService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,7 +18,7 @@ public class BookingController {
     }
 
     @PostMapping
-    public void createBooking(@RequestBody BookingRequest booking){
+    public void createBooking(@Valid @RequestBody BookingRequest booking){
         bookingService.createBooking(booking);
     }
 
@@ -29,6 +30,11 @@ public class BookingController {
     @GetMapping("{id}")
     public Booking getBooking(@PathVariable Long id){
         return bookingService.findBooking(id);
+    }
+
+    @DeleteMapping("/{id}")
+    public void cancelBooking(@PathVariable Long id) {
+        bookingService.cancelBooking(id);
     }
 
 }

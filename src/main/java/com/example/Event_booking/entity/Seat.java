@@ -20,12 +20,13 @@ public class Seat {
     @Column(unique = true,nullable = false)
     private String seatNo;
 
-    @ManyToOne
+    @ManyToOne(optional = false)
+    @JoinColumn(nullable = false)
     private Event event;
 
     @ManyToOne
     private User user;
-
+    @Column(nullable = false)
     private BigDecimal price;
 
 }

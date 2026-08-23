@@ -25,4 +25,8 @@ public class RedisService {
                 .setIfAbsent(key,userId,timeout,TimeUnit.SECONDS);
         return Boolean.TRUE.equals(success);
     }
+    public void deleteValue(String key){
+        redisTemplate.delete(key);
+    }
+
 }

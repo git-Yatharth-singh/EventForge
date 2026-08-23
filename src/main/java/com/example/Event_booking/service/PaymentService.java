@@ -1,13 +1,14 @@
 package com.example.Event_booking.service;
 
-import com.example.Event_booking.entity.Booking;
-import com.example.Event_booking.entity.Payment;
-import com.example.Event_booking.entity.paymentStatus;
-import com.example.Event_booking.entity.status;
+import com.example.Event_booking.entity.*;
 import com.example.Event_booking.repo.BookingRepository;
 import com.example.Event_booking.repo.BookingSeatRepository;
 import com.example.Event_booking.repo.PaymentRepository;
+import com.example.Event_booking.repo.UserRepository;
+import com.example.Event_booking.response.PaymentResponse;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -16,16 +17,19 @@ import java.util.List;import org.springframework.transaction.annotation.Transact
 
 @Service
 public class PaymentService {
-
+    private final RedisService redisService;
     private final PaymentRepository paymentRepository;
     private final BookingSeatRepository bookingSeatRepository;
     private final BookingRepository bookingRepository;
+    private final UserRepository userRepository;
 
-    public PaymentService(PaymentRepository paymentRepository, BookingSeatRepository bookingSeatRepository, BookingRepository bookingRepository) {
+
+    public PaymentService(RedisService redisService, PaymentRepository paymentRepository, BookingSeatRepository bookingSeatRepository, BookingRepository bookingRepository, UserRepository userRepository) {
+        this.redisService = redisService;
         this.paymentRepository = paymentRepository;
         this.bookingSeatRepository = bookingSeatRepository;
         this.bookingRepository = bookingRepository;
-
+        this.userRepository = userRepository;
     }
 
     public void createPayment(Booking booking) {
@@ -41,48 +45,138 @@ public class PaymentService {
 
     }
 
-    public List<Payment> allPayment() {
-        return paymentRepository.findAll();
+    public List<PaymentResponse> allPayment() {
+
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        String email = authentication.getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return paymentRepository.findByBookingUserId(user.getId())
+                .stream()
+                .map(payment -> new PaymentResponse(
+                        payment.getId(),
+                        payment.getStatus(),
+                        payment.getAmount(),
+                        payment.getBooking().getId()
+                ))
+                .toList();
     }
 
-    public Payment findPayment(Long id) {
-        return paymentRepository.findById(id).orElseThrow();
+
+    public PaymentResponse findPayment(Long id) {
+
+        Payment payment = paymentRepository.findById(id)
+                .orElseThrow();
+
+        return new PaymentResponse(
+                payment.getId(),
+                payment.getStatus(),
+                payment.getAmount(),
+                payment.getBooking().getId()
+        );
     }
 
     public List<Payment> findByBooking(Booking booking) {
+
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        String email = authentication.getName();
+
+        if (!booking.getUser().getEmail().equals(email)) {
+            throw new RuntimeException("You cannot access this booking's payment");
+        }
+
         return paymentRepository.findByBooking(booking);
     }
-@Transactional
+    @Transactional
     public void updateStatus(Long paymentid) {
-        Payment payment = paymentRepository.findById(paymentid).orElseThrow();
-        if(payment.getStatus()==paymentStatus.PENDING) {
+
+        Payment payment = paymentRepository.findById(paymentid)
+                .orElseThrow();
+
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        String email = authentication.getName();
+
+        if (!payment.getBooking().getUser().getEmail().equals(email)) {
+            throw new RuntimeException("You cannot access this payment");
+        }
+
+        if (payment.getStatus() == paymentStatus.PENDING) {
+
+            Booking booking = payment.getBooking();
+
+            releaseSeats(booking);
+
             payment.setStatus(paymentStatus.SUCCESS);
             paymentRepository.save(payment);
-            Booking booking = payment.getBooking();
+
             booking.setStatus(status.CONFIRMED);
             bookingRepository.save(booking);
         }
     }
-@Transactional
+    @Transactional
     public void failPayment(Long paymentid) {
-        Payment payment = paymentRepository.findById(paymentid).orElseThrow();
-        if(payment.getStatus()==paymentStatus.PENDING) {
+
+        Payment payment = paymentRepository.findById(paymentid)
+                .orElseThrow();
+
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        String email = authentication.getName();
+
+        if (!payment.getBooking().getUser().getEmail().equals(email)) {
+            throw new RuntimeException("You cannot access this payment");
+        }
+
+        if (payment.getStatus() == paymentStatus.PENDING) {
+
+            Booking booking = payment.getBooking();
+
+            releaseSeats(booking);
+
+            bookingSeatRepository.deleteByBooking(booking);
+
             payment.setStatus(paymentStatus.FAILED);
             paymentRepository.save(payment);
-            bookingSeatRepository.deleteByBooking(payment.getBooking());
-            Booking booking = payment.getBooking();
+
             booking.setStatus(status.FAILED);
             bookingRepository.save(booking);
         }
     }
-@Transactional
+    @Transactional
     public void cancelPayment(Long paymentid) {
-        Payment payment = paymentRepository.findById(paymentid).orElseThrow();
-        if(payment.getStatus()==paymentStatus.PENDING) {
+
+        Payment payment = paymentRepository.findById(paymentid)
+                .orElseThrow();
+
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        String email = authentication.getName();
+
+        if (!payment.getBooking().getUser().getEmail().equals(email)) {
+            throw new RuntimeException("You cannot access this payment");
+        }
+
+        if (payment.getStatus() == paymentStatus.PENDING) {
+
+            Booking booking = payment.getBooking();
+
+            releaseSeats(booking);
+
+            bookingSeatRepository.deleteByBooking(booking);
+
             payment.setStatus(paymentStatus.CANCELLED);
             paymentRepository.save(payment);
-            bookingSeatRepository.deleteByBooking(payment.getBooking());
-            Booking booking = payment.getBooking();
+
             booking.setStatus(status.CANCELLED);
             bookingRepository.save(booking);
         }
@@ -96,15 +190,32 @@ public class PaymentService {
                 LocalDateTime expiryTime = payment.getCreatedAt().plusMinutes(10);
 
                 if (LocalDateTime.now().isAfter(expiryTime)) {
-                    payment.setStatus(paymentStatus.EXPIRED);
-
-                    paymentRepository.save(payment);
-                    bookingSeatRepository.deleteByBooking(payment.getBooking());
                     Booking booking=payment.getBooking();
+
+                    releaseSeats(booking);
+
+                    bookingSeatRepository.deleteByBooking(booking);
+
+                    payment.setStatus(paymentStatus.EXPIRED);
+                    paymentRepository.save(payment);
+
                     booking.setStatus(status.EXPIRED);
                     bookingRepository.save(booking);
                 }
             }
+        }
+    }
+    public void releaseSeats(Booking booking){
+        List<com.example.Event_booking.entity.BookingSeat> bookingSeats=bookingSeatRepository.findByBookingId(booking.getId());
+
+        for(com.example.Event_booking.entity.BookingSeat bookingSeat : bookingSeats){
+
+            Long eventId=booking.getEvent().getId();
+            Long seatId=bookingSeat.getSeat().getId();
+
+            String key= "event:" +eventId+ ":seat:" + seatId;
+
+            redisService.deleteValue(key);
         }
     }
 }

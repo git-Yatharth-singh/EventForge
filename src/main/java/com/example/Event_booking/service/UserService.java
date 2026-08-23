@@ -2,6 +2,7 @@ package com.example.Event_booking.service;
 
 import com.example.Event_booking.Request.LoginRequest;
 import com.example.Event_booking.entity.User;
+import com.example.Event_booking.entity.role;
 import com.example.Event_booking.repo.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -32,6 +33,10 @@ public class UserService {
             throw new RuntimeException("Email already exists");
         }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        if (user.getRole() == null) {
+            user.setRole(role.USER);
+        }
+
         userRepository.save(user);
     }
 
