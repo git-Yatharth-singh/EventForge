@@ -14,7 +14,7 @@ import java.math.BigDecimal;
 @Table(
         name = "Seat",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"event_id", "seat_no"})
+                @UniqueConstraint(columnNames = {"event_id","seat_no"})
         }
 )
 public class Seat {
