@@ -11,15 +11,19 @@ import java.math.BigDecimal;
 @Setter
 @NoArgsConstructor
 @Entity
-@Table(name="Seat")
+@Table(
+        name = "Seat",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"event_id", "seat_no"})
+        }
+)
 public class Seat {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
-    @Column(unique = true,nullable = false)
+    @Column(nullable = false)
     private String seatNo;
-
     @ManyToOne(optional = false)
     @JoinColumn(nullable = false)
     private Event event;
