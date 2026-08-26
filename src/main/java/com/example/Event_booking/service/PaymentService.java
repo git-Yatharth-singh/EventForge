@@ -11,7 +11,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;import org.springframework.transaction.annotation.Transactional;
 
 
@@ -187,9 +189,9 @@ public class PaymentService {
         List<Payment> payments = paymentRepository.findAll();
         for (Payment payment : payments) {
             if (payment.getStatus() == paymentStatus.PENDING) {
-                LocalDateTime expiryTime = payment.getCreatedAt().plusMinutes(10);
+                Instant expiryTime = payment.getCreatedAt().plus(10, ChronoUnit.MINUTES);
 
-                if (LocalDateTime.now().isAfter(expiryTime)) {
+                if (Instant.now().isAfter(expiryTime)) {
                     Booking booking=payment.getBooking();
 
                     releaseSeats(booking);
