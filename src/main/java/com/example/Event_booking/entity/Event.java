@@ -21,7 +21,7 @@ public class Event {
     @Column(nullable = false)
     private String name;
 
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     private LocalDateTime startTime;
