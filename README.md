@@ -1,7 +1,14 @@
 # EventForge
 
-EventForge is an event booking platform built with Spring Boot that allows
-users to discover events, select seats, and make bookings securely.
+EventForge is a full-stack event booking platform that allows users to
+discover events, select seats, make secure bookings, and manage their
+bookings.
+
+## Live Demo
+
+🌐 **Frontend:** https://eventforgeapp.onrender.com
+
+🔗 **Backend API:** https://event-forge.up.railway.app
 
 ## Features
 
@@ -11,8 +18,8 @@ users to discover events, select seats, and make bookings securely.
 - Seat selection and booking
 - Temporary seat reservation using Redis
 - Automatic seat reservation expiration using Redis TTL
-- MySQL database for persistent data
-- Payment integration
+- PostgreSQL database for persistent data
+- Payment processing
 - Booking management
 - RESTful APIs
 - Secure password hashing using BCrypt
@@ -24,22 +31,24 @@ users to discover events, select seats, and make bookings securely.
 - Spring Security
 - JWT
 - Spring Data JPA / Hibernate
-- MySQL
+- PostgreSQL
 - Redis
 - Docker
 - Maven
+- React
+- Vite
 
 ## Architecture
 
-Client
-  ↓
+React Frontend
+       ↓
 Spring Boot REST API
-  ↓
+       ↓
 Spring Security + JWT
-  ↓
-Services
-  ↓
-MySQL + Redis
+       ↓
+Service Layer
+       ↓
+PostgreSQL + Redis
 
 ## Seat Reservation
 
@@ -53,6 +62,16 @@ Users authenticate using their email and password. After successful
 authentication, the server generates a JWT which is used to access
 protected endpoints.
 
+## Deployment
+
+- Frontend: Render
+- Backend: Railway
+- Database: PostgreSQL
+- Redis: Redis
+
 ## Project Status
 
-🚧 Currently under development.
+🚀 Deployed and functional.
+
+The project is still being actively improved with additional features
+and optimizations.
