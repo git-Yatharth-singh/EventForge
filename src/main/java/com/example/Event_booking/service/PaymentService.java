@@ -183,27 +183,31 @@ public class PaymentService {
             bookingRepository.save(booking);
         }
     }
-@Transactional
+    @Transactional
     @Scheduled(fixedRate = 60000)
     public void expirePayments() {
-        List<Payment> payments = paymentRepository.findAll();
+
+        List<Payment> payments =
+                paymentRepository.findByStatus(paymentStatus.PENDING);
+
         for (Payment payment : payments) {
-            if (payment.getStatus() == paymentStatus.PENDING) {
-                Instant expiryTime = payment.getCreatedAt().plus(10, ChronoUnit.MINUTES);
 
-                if (Instant.now().isAfter(expiryTime)) {
-                    Booking booking=payment.getBooking();
+            Instant expiryTime =
+                    payment.getCreatedAt().plus(10, ChronoUnit.MINUTES);
 
-                    releaseSeats(booking);
+            if (Instant.now().isAfter(expiryTime)) {
 
-                    bookingSeatRepository.deleteByBooking(booking);
+                Booking booking = payment.getBooking();
 
-                    payment.setStatus(paymentStatus.EXPIRED);
-                    paymentRepository.save(payment);
+                releaseSeats(booking);
 
-                    booking.setStatus(status.EXPIRED);
-                    bookingRepository.save(booking);
-                }
+                bookingSeatRepository.deleteByBooking(booking);
+
+                payment.setStatus(paymentStatus.EXPIRED);
+                paymentRepository.save(payment);
+
+                booking.setStatus(status.EXPIRED);
+                bookingRepository.save(booking);
             }
         }
     }

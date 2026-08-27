@@ -2,6 +2,7 @@ package com.example.Event_booking.repo;
 
 import com.example.Event_booking.entity.Booking;
 import com.example.Event_booking.entity.Payment;
+import com.example.Event_booking.entity.paymentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,4 +12,5 @@ import java.util.List;
 public interface PaymentRepository extends JpaRepository<Payment,Long> {
     List<Payment> findByBooking(Booking booking);
     List<Payment> findByBookingUserId(Long userId);
+    List<Payment> findByStatus(paymentStatus status);
 }
